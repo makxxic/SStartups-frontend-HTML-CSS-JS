@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karura Forest - SStartups</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/map.css">
+    <link rel="stylesheet" href="../assets/css/suggestedplace.css">
+</head>
+<body>
+    <div id="navbar"></div>
+
+    <section id="karura-explore" class="explore-section">
+        <h2>Explore Karura Forest</h2>
+        <!-- Draggable image square and SVG line overlay -->
+        <div style="position: relative;">
+            <div id="draggable-square" style="position: absolute; z-index: 1000; top: 40px; left: 40px;">
+                <div id="gallery-square" class="gallery-container">
+                    <!-- Images will be injected here -->
+                </div>
+            </div>
+            <svg id="line-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 500px; pointer-events: none; z-index: 999;"></svg>
+        </div>
+    <div id="map" style="height: 500px; position: relative; z-index: 1;"></div>
+        <div id="modal" class="modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <img class="modal-content" id="modal-img">
+            <div id="caption"></div>
+        </div>
+    </section>
+
+    <div id="footer"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/map.js"></script>
+    <script src="../js/suggestedplace.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        // Images data for each location
+        const imagesData = [
+            { src: 'https://i0.wp.com/colorfulsisters.com/wp-content/uploads/2020/09/Karura-Forest-Nature-Trails-Waterfalls-and-Cafe-Nairobi-Kenya-16.jpg?resize=768,1024&ssl=1', alt: 'Karura Forest Waterfall', lat: -1.232, lng: 36.834 },
+            { src: 'https://hblimg.mmtcdn.com/content/hubble/img/nairobidestimages/mmt/activities/m_Karura_Forest_2_l_480_640.jpg', alt: 'Karura Forest Trail', lat: -1.234, lng: 36.832 },
+            { src: 'https://media-cdn.tripadvisor.com/media/photo-o/0d/d0/ed/40/photo0jpg.jpg', alt: 'Karura Forest Trees', lat: -1.231, lng: 36.835 }
+        ];
+
+        // Load navbar and footer
+        fetch('../components/navbar.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('navbar').innerHTML = data);
+        fetch('../components/footer.html')
+            .then(response => response.text())
+            .then(data => document.getElementById('footer').innerHTML = data);
+
+        // Initialize Karura Forest map
+        document.addEventListener('DOMContentLoaded', () => {
+            map = L.map('map').setView([-1.233, 36.833], 14); // Karura Forest coordinates
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Add markers for each gallery image location
+            const locations = [
+                { lat: -1.232, lng: 36.834, title: 'Karura Forest Waterfall', desc: 'A serene waterfall in Karura.' },
+                { lat: -1.234, lng: 36.832, title: 'Karura Forest Trail', desc: 'A scenic walking trail.' },
+                { lat: -1.231, lng: 36.835, title: 'Karura Forest Trees', desc: 'Majestic trees in the forest.' }
+            ];
+
+            locations.forEach(location => {
+                const marker = L.marker([location.lat, location.lng]).addTo(map)
+                    .bindPopup(`<b>${location.title}</b><br>${location.desc}`);
+                marker.on('click', () => {
+                    showImagesForLocation(location.lat, location.lng);
+                });
+                markers.push(marker);
+            });
+
+            // Initially show all images
+            showImagesForLocation();
+
+            // Make the square draggable
+            makeDraggable(document.getElementById('draggable-square'));
+        });
+
+        // Store last selected pin location
+        let lastPinLat = null, lastPinLng = null;
+        // Show images for a specific location (or all if no location)
+        function showImagesForLocation(lat, lng) {
+            const gallery = document.getElementById('gallery-square');
+            gallery.innerHTML = '';
+            let filtered = imagesData;
+            if (lat !== undefined && lng !== undefined) {
+                filtered = imagesData.filter(img => img.lat === lat && img.lng === lng);
+            }
+            filtered.forEach(img => {
+                const imageElem = document.createElement('img');
+                imageElem.src = img.src;
+                imageElem.alt = img.alt;
+                imageElem.className = 'gallery-img';
+                imageElem.setAttribute('data-lat', img.lat);
+                imageElem.setAttribute('data-lng', img.lng);
+                imageElem.onclick = function() { panToLocation(this); };
+                gallery.appendChild(imageElem);
+            });
+            // Draw line to pin if location is selected
+            if (lat !== undefined && lng !== undefined) {
+                lastPinLat = lat;
+                lastPinLng = lng;
+                drawLineToPin(lat, lng);
+            } else {
+                lastPinLat = null;
+                lastPinLng = null;
+                clearLineToPin();
+            }
+        }
+
+        // Pan to location and open popup when image is clicked
+        function panToLocation(img) {
+            const lat = parseFloat(img.getAttribute('data-lat'));
+            const lng = parseFloat(img.getAttribute('data-lng'));
+            map.panTo([lat, lng]);
+            const marker = markers.find(m => m.getLatLng().lat === lat && m.getLatLng().lng === lng);
+            if (marker) marker.openPopup();
+            openModal(img.src, img.alt); // Also open the modal for enlarged image
+            lastPinLat = lat;
+            lastPinLng = lng;
+            drawLineToPin(lat, lng);
+        }
+        // Draw a line from the draggable square to the selected pin
+        function drawLineToPin(lat, lng) {
+            const mapDiv = document.getElementById('map');
+            const square = document.getElementById('draggable-square');
+            const svg = document.getElementById('line-overlay');
+            // Get square center
+            const squareRect = square.getBoundingClientRect();
+            const mapRect = mapDiv.getBoundingClientRect();
+            const squareX = squareRect.left + squareRect.width / 2 - mapRect.left;
+            const squareY = squareRect.top + squareRect.height / 2 - mapRect.top;
+            // Convert lat/lng to pixel position on map
+            const point = map.latLngToContainerPoint([lat, lng]);
+            // Draw SVG line
+            svg.innerHTML = `<line x1="${squareX}" y1="${squareY}" x2="${point.x}" y2="${point.y}" stroke="red" stroke-width="2" />`;
+        }
+
+        // Clear the SVG line
+        function clearLineToPin() {
+            const svg = document.getElementById('line-overlay');
+            svg.innerHTML = '';
+        }
+
+        // Make an element draggable
+        function makeDraggable(elem) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            elem.onmousedown = dragMouseDown;
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elem.style.top = (elem.offsetTop - pos2) + "px";
+                elem.style.left = (elem.offsetLeft - pos1) + "px";
+                // Always redraw line to last selected pin if any
+                if (lastPinLat !== null && lastPinLng !== null) {
+                    drawLineToPin(lastPinLat, lastPinLng);
+                }
+            }
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+    </script>
+</body>
+</html>

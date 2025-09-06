@@ -39,7 +39,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         });
         showImagesForLocation(imagesData, undefined, undefined, document.getElementById('gallery-square'), panToLocation, (lat, lng) => drawLineToPin(mapInstance, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')), () => clearLineToPin(document.getElementById('line-overlay')));
     });
-    makeDraggable(document.getElementById('draggable-square'), lastPinLat, lastPinLng, (lat, lng) => drawLineToPin(map, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')));
+    makeDraggable(
+        document.getElementById('draggable-square'),
+        () => ({ lat: lastPinLat, lng: lastPinLng }),
+        (lat, lng) => drawLineToPin(map, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay'))
+    );
     
     // Responsive line redraw
     function redrawLine() {

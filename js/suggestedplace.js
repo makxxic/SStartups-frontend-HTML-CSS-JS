@@ -2,7 +2,7 @@
 window.addEventListener('DOMContentLoaded', function() {
     const gallery = document.getElementById('gallery-square');
     if (gallery) {
-        gallery.innerHTML = '<img src="https://placehold.co/100x100" alt="Sample" />';
+        gallery.innerHTML = '<img src="https://placehold.co/200x200" alt="Sample" />';
     }
     // Modal logic can be added here
 });

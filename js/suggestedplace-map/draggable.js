@@ -1,5 +1,7 @@
+
 // draggable.js
 // Handles draggable square and line drawing
+import { showLoader, hideLoader } from './loader.js';
 
 export function makeDraggable(elem, getPinCoords, drawLineToPin) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -9,6 +11,7 @@ export function makeDraggable(elem, getPinCoords, drawLineToPin) {
         e.preventDefault();
         pos3 = e.clientX;
         pos4 = e.clientY;
+        showLoader(elem, { color: '#3498db', size: 32 });
         document.onmouseup = closeDragElement;
         document.onmousemove = elementDrag;
     }
@@ -29,6 +32,7 @@ export function makeDraggable(elem, getPinCoords, drawLineToPin) {
     function closeDragElement() {
         document.onmouseup = null;
         document.onmousemove = null;
+        hideLoader(elem);
         // Redraw line after drag ends
         const { lat, lng } = getPinCoords();
         if (lat !== null && lng !== null) {

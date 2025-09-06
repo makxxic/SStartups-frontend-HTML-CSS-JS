@@ -1,0 +1,14 @@
+/* loader.css - Spinner styles for custom loader */
+.custom-loader-spinner {
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-sizing: border-box;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.custom-loader-overlay {
+  /* Optional: add fade-in effect */
+  transition: opacity 0.2s;
+}

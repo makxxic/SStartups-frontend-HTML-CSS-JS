@@ -6,6 +6,7 @@ import { fetchNearbyPlaces } from './places.js';
 import { fetchImagesForPlace } from './images.js';
 import { addMarkers, showImagesForLocation } from './markers.js';
 import { makeDraggable, drawLineToPin, clearLineToPin } from './draggable.js';
+import { showLoader, hideLoader } from './loader.js';
 
 let map;
 let markers = [];
@@ -15,10 +16,15 @@ let lastPinLat = null, lastPinLng = null;
 const preference = 'nature';
 
 window.addEventListener('DOMContentLoaded', async () => {
+    const mapElem = document.getElementById('map');
+    const galleryElem = document.getElementById('gallery-square');
+    showLoader(mapElem, { color: '#3498db', size: 48, overlayBg: 'rgba(255,255,255,0.7)' });
     map = await initializeMap('map', [-1.2648, 36.8172], async (mapInstance, userLat, userLng) => {
+        showLoader(galleryElem, { color: '#3498db', size: 40 });
         let nearbyPlaces = await fetchNearbyPlaces(userLat, userLng, preference);
         nearbyPlaces = nearbyPlaces.sort(() => 0.5 - Math.random()).slice(0, 3);
         for (const place of nearbyPlaces) {
+            showLoader(galleryElem, { color: '#3498db', size: 40 });
             const images = await fetchImagesForPlace(place.name);
             images.forEach(img => {
                 img.lat = place.lat;
@@ -31,13 +37,16 @@ window.addEventListener('DOMContentLoaded', async () => {
                 title: place.name,
                 desc: place.desc
             });
+            hideLoader(galleryElem);
         }
+        hideLoader(galleryElem);
+        hideLoader(mapElem);
         markers = addMarkers(mapInstance, locations, imagesData, (lat, lng) => {
             lastPinLat = lat;
             lastPinLng = lng;
-            showImagesForLocation(imagesData, lat, lng, document.getElementById('gallery-square'), panToLocation, (lat, lng) => drawLineToPin(mapInstance, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')), () => clearLineToPin(document.getElementById('line-overlay')));
+            showImagesForLocation(imagesData, lat, lng, galleryElem, panToLocation, (lat, lng) => drawLineToPin(mapInstance, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')), () => clearLineToPin(document.getElementById('line-overlay')));
         });
-        showImagesForLocation(imagesData, undefined, undefined, document.getElementById('gallery-square'), panToLocation, (lat, lng) => drawLineToPin(mapInstance, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')), () => clearLineToPin(document.getElementById('line-overlay')));
+        showImagesForLocation(imagesData, undefined, undefined, galleryElem, panToLocation, (lat, lng) => drawLineToPin(mapInstance, lat, lng, document.getElementById('draggable-square'), document.getElementById('line-overlay')), () => clearLineToPin(document.getElementById('line-overlay')));
     });
     makeDraggable(
         document.getElementById('draggable-square'),

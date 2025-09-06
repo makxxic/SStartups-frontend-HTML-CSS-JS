@@ -1,3 +1,11 @@
+// Gallery and modal logic placeholder
+window.addEventListener('DOMContentLoaded', function() {
+    const gallery = document.getElementById('gallery-square');
+    if (gallery) {
+        gallery.innerHTML = '<img src="https://placehold.co/100x100" alt="Sample" />';
+    }
+    // Modal logic can be added here
+});
 function openModal(src, alt) {
     const modal = document.getElementById('modal');
     const modalImg = document.getElementById('modal-img');

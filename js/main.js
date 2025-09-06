@@ -1,6 +1,13 @@
 import { loadComponent } from './utils/component-loader.js';
 
+const componentsToLoad = [
+    { url: '../components/topnavbar.html', selector: '#navbar' },
+    { url: '../components/footer.html', selector: '#footer' }
+    // Add more components here as needed
+];
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadComponent('../components/topnavbar.html', '#navbar');
-    loadComponent('../components/footer.html', '#footer');
+    componentsToLoad.forEach(component => {
+        loadComponent(component.url, component.selector);
+    });
 });

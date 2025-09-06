@@ -1,4 +1,22 @@
 .explore-section {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.gallery-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#suggestedplace-modal-container {
+    margin-top: 2rem;
+}
+.explore-section {
     padding: 20px;
     text-align: center;
     background-color: #f4f4f4;

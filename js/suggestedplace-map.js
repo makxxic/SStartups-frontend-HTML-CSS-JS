@@ -1,3 +1,13 @@
+// Basic Leaflet map initialization
+window.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('map')) {
+        var map = L.map('map').setView([-1.2648, 36.8172], 13); // Example coordinates for Nairobi
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+    }
+});
 // suggestedplace-map.js
 // Handles map, draggable square, and image logic for suggestedplace.html
 
@@ -9,29 +19,6 @@ const imagesData = [
     { src: 'https://media-cdn.tripadvisor.com/media/photo-o/0d/d0/ed/40/photo0jpg.jpg', alt: 'Karura Forest Trees', lat: -1.231, lng: 36.835 }
 ];
 
-// Load navbar and footer
-fetch('../components/topnavbar.html')
-    .then(response => response.text())
-    .then(data => document.getElementById('navbar').innerHTML = data);
-fetch('../components/footer.html')
-    .then(response => response.text())
-    .then(data => document.getElementById('footer').innerHTML = data);
-
-// Load modular map component
-fetch('../components/suggestedplace-map.html')
-    .then(response => response.text())
-    .then(data => {
-        const container = document.getElementById('suggestedplace-map-container');
-        if (container) container.innerHTML = data;
-    });
-
-// Load modular modal component
-fetch('../components/suggestedplace-modal.html')
-    .then(response => response.text())
-    .then(data => {
-        const container = document.getElementById('suggestedplace-modal-container');
-        if (container) container.innerHTML = data;
-    });
 
 // Initialize Karura Forest map
 let lastPinLat = null, lastPinLng = null;
@@ -56,6 +43,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         markers.push(marker);
     });
+
+    // Get user's location and add red marker
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            const userLat = position.coords.latitude;
+            const userLng = position.coords.longitude;
+
+            // Custom red icon
+            const redIcon = L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            // Add red marker for user
+            const userMarker = L.marker([userLat, userLng], { icon: redIcon }).addTo(map)
+                .bindPopup('You are here!'); // Initial popup
+
+            // Optionally pan to user's location
+            map.panTo([userLat, userLng]);
+
+            // Optional: Reverse geocode to get address
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLat}&lon=${userLng}&zoom=18&addressdetails=1`)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.display_name || 'Unknown location';
+                    userMarker.bindPopup(`You are at: ${address}`);
+                    userMarker.openPopup(); // Re-open with updated info
+                })
+                .catch(error => {
+                    console.error('Reverse geocoding error:', error);
+                });
+        }, error => {
+            console.error('Geolocation error:', error);
+            // Optional: Alert user if permission denied or error
+            alert('Unable to get your location. Check permissions or try again.');
+        });
+    } else {
+        console.log('Geolocation not supported by this browser.');
+    }
 
     // Initially show all images
     showImagesForLocation();

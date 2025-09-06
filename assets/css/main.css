@@ -1,0 +1,16 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f8f9fa;
+    color: #222;
+}
+
+header, footer {
+    background: #222;
+    color: #fff;
+    padding: 1rem 0;
+}
+
+h2 {
+    color: #007bff;
+}
